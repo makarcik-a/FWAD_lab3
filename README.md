@@ -16,7 +16,7 @@
 
 1. Склонируйте репозиторий проекта:
    ```bash
-   git clone <URL-репозитория>
+   git clone https://github.com/makarcik-a/FWAD_lab3.git
    cd <папка_проекта>
    ```
    2. Установите зависимости:
@@ -295,6 +295,19 @@ public function definition()
    ```bash
    php artisan db:seed
    ```
+
+## Таблица Category
+![изображение](https://github.com/user-attachments/assets/295eff33-1e57-46e2-ab7f-a13ad5517ecb)
+
+## Таблица Tasks
+![изображение](https://github.com/user-attachments/assets/d4e38d0c-88ad-400c-b0f5-d38ff8a5a742)
+
+## Таблица Tags
+![изображение](https://github.com/user-attachments/assets/10f8be1d-ecb0-4cd9-8598-6cd2813d9296)
+
+## Пример полученных задач, созданных благодаря фабрикам
+![изображение](https://github.com/user-attachments/assets/5edb332c-7e0e-4e68-aae3-6a8d528ccda7)
+
 
 ### №7. Работа с контроллерами и представлениями
 
