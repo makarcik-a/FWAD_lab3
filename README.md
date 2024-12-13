@@ -42,7 +42,7 @@
      - `created_at` — дата создания категории;
      - `updated_at` — дата обновления категории.
 ```php
-public function up(): void
+    public function up(): void
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
