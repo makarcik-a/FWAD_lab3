@@ -110,13 +110,6 @@ public function up(): void
         'title',
         'description',
     ];
-
-    # User
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
 ```
 
 ### №3. Связь между таблицами
