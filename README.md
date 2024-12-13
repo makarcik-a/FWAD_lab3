@@ -94,24 +94,24 @@ public function up(): void
 ```
 8. Добавьте поле `$fillable` в модели `Task`, `Category` и `Tag` для массового заполнения данных.
 ```
-    # Models/Category.php
+    # Category
     protected $fillable = [
         'name',
         'description',
     ];
 
-    # Models/Tag.php
+    # Tag
     protected $fillable = [
         'name',
     ];
 
-    # Models/Task.php
+    # Task
     protected $fillable = [
         'title',
         'description',
     ];
 
-    # Models/User.php
+    # User
     protected $fillable = [
         'name',
         'email',
