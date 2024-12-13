@@ -41,7 +41,7 @@
      - `description` — описание категории;
      - `created_at` — дата создания категории;
      - `updated_at` — дата обновления категории.
-```
+```php
 public function up(): void
     {
         Schema::create('categories', function (Blueprint $table) {
@@ -60,7 +60,7 @@ public function up(): void
      - `description` — описание задачи;
      - `created_at` — дата создания задачи;
      - `updated_at` — дата обновления задачи.
-```
+```php
     public function up(): void
     {
         Schema::create('tasks', function (Blueprint $table) {
@@ -82,34 +82,34 @@ public function up(): void
      - `name` — название тега;
      - `created_at` — дата создания тега;Й
      - `updated_at` — дата обновления тега.
-```
+```php
 public function up(): void
-    {
-        Schema::create('tags', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->timestamps();
-        });
-    }
+{
+    Schema::create('tags', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->timestamps();
+    });
+}
 ```
 8. Добавьте поле `$fillable` в модели `Task`, `Category` и `Tag` для массового заполнения данных.
-```
-    # Category
-    protected $fillable = [
-        'name',
-        'description',
-    ];
+```php
+# Category
+protected $fillable = [
+    'name',
+    'description',
+];
 
-    # Tag
-    protected $fillable = [
-        'name',
-    ];
+# Tag
+protected $fillable = [
+    'name',
+];
 
-    # Task
-    protected $fillable = [
-        'title',
-        'description',
-    ];
+# Task
+protected $fillable = [
+    'title',
+    'description',
+];
 ```
 
 ### №3. Связь между таблицами
@@ -120,7 +120,7 @@ public function up(): void
 1. Создайте миграцию для добавления поля `category_id` в таблицу **task**.
    - `php artisan make:migration add_category_id_to_tasks_table --table=tasks`
    - Определите структуру поля `category_id` и добавьте внешний ключ для связи с таблицей **category**.
-```
+```php
 Schema::table('tasks', function (Blueprint $table) {
             $table->foreign('category_id')
                   ->references('id')->on('categories')
@@ -133,7 +133,7 @@ Schema::table('tasks', function (Blueprint $table) {
 3. Определение соответствующей структуры таблицы в миграции.
    - Данная таблица должна связывать задачи и теги по их идентификаторам.
    - **Например**: `task_id` и `tag_id`: `10` задача связана с `5` тегом.
-```
+```php
 Schema::create('task_tag', function (Blueprint $table) {
     $table->foreign('task_id')->references('id')->on('tasks')->onDelete('cascade');
     $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
@@ -157,36 +157,36 @@ Schema::create('task_tag', function (Blueprint $table) {
      ```
 2. Добавьте отношения в модель `Task`
    - Задача прикреплена к одной категории.
-```
+```php
 public function category()
-    {
-        return $this->belongsTo(Category::class);
-    }
+{
+    return $this->belongsTo(Category::class);
+}
 ```
 
    - Задача может иметь много тегов.
-```
+```php
 public function tags()
-    {
-        return $this->belongsToMany(Tag::class, 'task_tag');
-    }
+{
+    return $this->belongsToMany(Tag::class, 'task_tag');
+}
 ```
 
 3. Добавьте отношения в модель `Tag` (Тег может быть прикреплен к многим задачам)
-```
+```php
 public function tasks()
-    {
-        return $this->belongsToMany(Task::class, 'task_tag'); // Отношение "Многие ко многим"
-    }
+{
+    return $this->belongsToMany(Task::class, 'task_tag'); // Отношение "Многие ко многим"
+}
 ```
 
 4. Добавьте соотвтествующие поля в `$fillable` моделей.
-```
+```php
 protected $fillable = [
         'title',
         'description',
         'category_id',
-    ];
+];
 ```
 
 ### №5. Создание фабрик и сидов
@@ -197,34 +197,34 @@ protected $fillable = [
 1. Создайте фабрику для модели `Category`:
    - `php artisan make:factory CategoryFactory --model=Category`
    - Определите структуру данных для генерации категорий.
-```
+```php
 public function definition()
-    {
-        return [
-            'name' => $this->faker->word, // Сгенерированное название категории
-            'description' => $this->faker->sentence, // Описание категории
-        ];
-    }
+{
+    return [
+        'name' => $this->faker->word, // Сгенерированное название категории
+        'description' => $this->faker->sentence, // Описание категории
+    ];
+}
 ```
 2. Создайте фабрику для модели `Task`.
-```
+```php
 public function definition()
-    {
-        return [
-            'title' => $this->faker->sentence,
-            'description' => $this->faker->paragraph,
-            'category_id' => Category::factory(),
-        ];
-    }
+{
+    return [
+        'title' => $this->faker->sentence,
+        'description' => $this->faker->paragraph,
+        'category_id' => Category::factory(),
+    ];
+}
 ```
 4. Создайте фабрику для модели `Tag`.
-```
+```php
 public function definition()
-    {
-        return [
-            'name' => $this->faker->word,
-        ];
-    }
+{
+    return [
+        'name' => $this->faker->word,
+    ];
+}
 ```
 6. Создайте сиды (`seeders`) для заполнения таблиц начальными данными для моделей: `Category`, `Task`, `Tag`.
 
@@ -247,22 +247,22 @@ public function definition()
 
 1. Откройте контроллер `TaskController` (`app/Http/Controllers/TaskController.php`).
 2. Обновите метод `index` для получения списка задач из базы данных. 
-```
+```php
 public function index()
-    {
-        $tasks = Task::with(['category', 'tags'])->get();
+{
+    $tasks = Task::with(['category', 'tags'])->get();
 
-        return view('tasks.index', compact('tasks'));
-    }
+    return view('tasks.index', compact('tasks'));
+}
 ```
 3. Обновите метод `show` для отображения отдельной задачи. 
-```
+```php
 public function show($id)
-    {
-        $task = Task::with(['category', 'tags'])->findOrFail($id);
+{
+    $task = Task::with(['category', 'tags'])->findOrFail($id);
 
-        return view('tasks.show', compact('task'));
-    }
+    return view('tasks.show', compact('task'));
+}
 ```
 4. В методах `index` и `show` используйте метод `with` (**Eager Loading**) для загрузки связанных моделей.
 4. Обновите соответствующие представления для отображения списка задач и отдельной задачи.
@@ -274,7 +274,7 @@ public function show($id)
      $request->all();
      ```
 6. Обновите метод `edit` для отображения формы редактирования задачи и метод `update` для сохранения изменений в базе данных.
-```
+```php
     public function edit($id)
     {
         $task = Task::with(['category', 'tags'])->findOrFail($id);
@@ -284,7 +284,7 @@ public function show($id)
         return view('tasks.edit', compact('task', 'categories', 'tags'));
     }
 
-public function update(Request $request, $id)
+    public function update(Request $request, $id)
     {
         // Валидация данных
         $validated = $request->validate([
@@ -309,7 +309,7 @@ public function update(Request $request, $id)
     }
 ```
 8. Обновите метод `destroy` для удаления задачи из базы данных.4
-```
+```php
     public function destroy($id)
     {
         $task = Task::findOrFail($id);
