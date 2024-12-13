@@ -41,6 +41,17 @@
      - `description` — описание категории;
      - `created_at` — дата создания категории;
      - `updated_at` — дата обновления категории.
+```
+public function up(): void
+    {
+        Schema::create('categories', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->timestamps();
+        });
+    }
+```    
 3. Создайте модель `Task` — задача.
 4. Определение структуры таблицы **task** в миграции:
    - Добавьте поля:
@@ -49,6 +60,17 @@
      - `description` — описание задачи;
      - `created_at` — дата создания задачи;
      - `updated_at` — дата обновления задачи.
+```
+    public function up(): void
+    {
+        Schema::create('tasks', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->timestamps();
+        });
+    }
+```
 5. Запустите миграцию для создания таблицы в базе данных:
    ```bash
    php artisan migrate
@@ -60,7 +82,42 @@
      - `name` — название тега;
      - `created_at` — дата создания тега;Й
      - `updated_at` — дата обновления тега.
+```
+public function up(): void
+    {
+        Schema::create('tags', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+    }
+```
 8. Добавьте поле `$fillable` в модели `Task`, `Category` и `Tag` для массового заполнения данных.
+```
+    # Models/Category.php
+    protected $fillable = [
+        'name',
+        'description',
+    ];
+
+    # Models/Tag.php
+    protected $fillable = [
+        'name',
+    ];
+
+    # Models/Task.php
+    protected $fillable = [
+        'title',
+        'description',
+    ];
+
+    # Models/User.php
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+    ];
+```
 
 ### №3. Связь между таблицами
 
@@ -70,11 +127,26 @@
 1. Создайте миграцию для добавления поля `category_id` в таблицу **task**.
    - `php artisan make:migration add_category_id_to_tasks_table --table=tasks`
    - Определите структуру поля `category_id` и добавьте внешний ключ для связи с таблицей **category**.
+```
+Schema::table('tasks', function (Blueprint $table) {
+            $table->foreign('category_id')
+                  ->references('id')->on('categories')
+                  ->onDelete('set null');
+ });
+```
+
 2. Создайте промежуточную таблицу для связи многие ко многим между задачами и тегами:
    - `php artisan make:migration create_task_tag_table`
 3. Определение соответствующей структуры таблицы в миграции.
    - Данная таблица должна связывать задачи и теги по их идентификаторам.
    - **Например**: `task_id` и `tag_id`: `10` задача связана с `5` тегом.
+```
+Schema::create('task_tag', function (Blueprint $table) {
+    $table->foreign('task_id')->references('id')->on('tasks')->onDelete('cascade');
+    $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
+});
+```
+
 4. Запустите миграцию для создания таблицы в базе данных.
 
 ### №4. Связи между моделями
@@ -92,9 +164,37 @@
      ```
 2. Добавьте отношения в модель `Task`
    - Задача прикреплена к одной категории.
+```
+public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+```
+
    - Задача может иметь много тегов.
+```
+public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'task_tag');
+    }
+```
+
 3. Добавьте отношения в модель `Tag` (Тег может быть прикреплен к многим задачам)
+```
+public function tasks()
+    {
+        return $this->belongsToMany(Task::class, 'task_tag'); // Отношение "Многие ко многим"
+    }
+```
+
 4. Добавьте соотвтествующие поля в `$fillable` моделей.
+```
+protected $fillable = [
+        'title',
+        'description',
+        'category_id',
+    ];
+```
 
 ### №5. Создание фабрик и сидов
 
@@ -104,9 +204,36 @@
 1. Создайте фабрику для модели `Category`:
    - `php artisan make:factory CategoryFactory --model=Category`
    - Определите структуру данных для генерации категорий.
+```
+public function definition()
+    {
+        return [
+            'name' => $this->faker->word, // Сгенерированное название категории
+            'description' => $this->faker->sentence, // Описание категории
+        ];
+    }
+```
 2. Создайте фабрику для модели `Task`.
-3. Создайте фабрику для модели `Tag`.
-4. Создайте сиды (`seeders`) для заполнения таблиц начальными данными для моделей: `Category`, `Task`, `Tag`.
+```
+public function definition()
+    {
+        return [
+            'title' => $this->faker->sentence,
+            'description' => $this->faker->paragraph,
+            'category_id' => Category::factory(),
+        ];
+    }
+```
+4. Создайте фабрику для модели `Tag`.
+```
+public function definition()
+    {
+        return [
+            'name' => $this->faker->word,
+        ];
+    }
+```
+6. Создайте сиды (`seeders`) для заполнения таблиц начальными данными для моделей: `Category`, `Task`, `Tag`.
 
       ```bash
       php artisan make:seeder CategorySeeder
@@ -115,7 +242,7 @@
       ```
 
 
-5. Обновите файл `DatabaseSeeder` для запуска сидов и запустите их:
+7. Обновите файл `DatabaseSeeder` для запуска сидов и запустите их:
    ```bash
    php artisan db:seed
    ```
@@ -127,10 +254,23 @@
 
 1. Откройте контроллер `TaskController` (`app/Http/Controllers/TaskController.php`).
 2. Обновите метод `index` для получения списка задач из базы данных. 
-   - Используйте модель `Task` для получения всех задач.
+```
+public function index()
+    {
+        $tasks = Task::with(['category', 'tags'])->get();
+
+        return view('tasks.index', compact('tasks'));
+    }
+```
 3. Обновите метод `show` для отображения отдельной задачи. 
-   - Отобразите информацию о задаче по ее идентификатору
-   - **Обязательно** отобразите категорию и теги задачи.
+```
+public function show($id)
+    {
+        $task = Task::with(['category', 'tags'])->findOrFail($id);
+
+        return view('tasks.show', compact('task'));
+    }
+```
 4. В методах `index` и `show` используйте метод `with` (**Eager Loading**) для загрузки связанных моделей.
 4. Обновите соответствующие представления для отображения списка задач и отдельной задачи.
 5. Обновите метод `create` для отображения формы создания задачи и метод `store` для сохранения новой задачи в базе данных. 
@@ -141,26 +281,50 @@
      $request->all();
      ```
 6. Обновите метод `edit` для отображения формы редактирования задачи и метод `update` для сохранения изменений в базе данных.
-7. Обновите метод `destroy` для удаления задачи из базы данных.4
+```
+    public function edit($id)
+    {
+        $task = Task::with(['category', 'tags'])->findOrFail($id);
+        $categories = Category::all();
+        $tags = Tag::all();
 
+        return view('tasks.edit', compact('task', 'categories', 'tags'));
+    }
 
-## Дополниетльные задания
+public function update(Request $request, $id)
+    {
+        // Валидация данных
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'category_id' => 'required|exists:categories,id',
+            'tags' => 'nullable|array',
+            'tags.*' => 'exists:tags,id',
+        ]);
 
-> [!NOTE]
-> **Важно**: Данные задания не являются обязательными, но помогут углубить понимание материала.
+        $task = Task::findOrFail($id);
+        $task->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'category_id' => $validated['category_id'],
+        ]);
 
-1. Создайте модель `Comment` для комментариев к задачам.
-   - Добавьте соответствующие поля в миграции.
-   - Создайте отношения между моделями Task и Comment.
-2. Добавьте возможность добавления комментариев к задачам.
-   - Обновите представление для отображения комментариев к задаче и возможность просмотра списка комментариев и комментария по `id`: `/task/{id}/comment`, `/task/{id}/comment/{comment_id}`
-3. Добавьте возможность добавления тегов к задачам и используйте транзакции для сохранения связей между задачами и тегами.
-   ```php
-   DB::transaction(function () use ($request) {
-        // Создание задачи
-        // Привязка тегов к задаче
-    });
-    ```
+        // Обновляем теги
+        $task->tags()->sync($validated['tags'] ?? []);
+
+        return redirect()->route('tasks.show', $task->id);
+    }
+```
+8. Обновите метод `destroy` для удаления задачи из базы данных.4
+```
+    public function destroy($id)
+    {
+        $task = Task::findOrFail($id);
+        $task->delete();
+
+        return redirect()->route('tasks.index');
+    }
+```
   
 ## Контрольные вопросы
 
